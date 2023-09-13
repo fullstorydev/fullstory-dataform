@@ -1,0 +1,12 @@
+{
+  "warehouse": "bigquery",
+  "defaultDatabase": "fs-corp-crmint",
+  "defaultLocation": "US",
+  "vars": {
+    "env": "dev",
+    "fullstory_export_project": "fs-corp-crmint",
+    "fullstory_export_dataset": "fullstory_export",
+    "fullstory_export_org_id": "2ZNW"
+  }
+}
+

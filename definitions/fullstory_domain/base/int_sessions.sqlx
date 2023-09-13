@@ -1,0 +1,52 @@
+js {
+  function getReplayUrlPath() {
+    const orgId = dataform.projectConfig.vars.fullstory_export_org_id;
+    return `'https://${fullstory.replayHost}/ui/${orgId}/session/'`;
+  }
+
+  function generateCountColumns() {
+    return `${fullstory.eventTypes.map(eventType => `count(case when events.event_type = '${eventType}' then 1 end) as total_${eventType}_events`).join(',\n')}`;
+  }
+}
+
+config {
+  type: "view",
+  schema: functions.baseSchema(),
+  uniqueKey: fullstory.eventsUniqueColumns,
+  description: "",
+  tags: ["fullstory"]
+}
+
+select
+    events.full_session_id as full_session_id,
+    any_value(users.user_id) as user_id,
+    any_value(events.device_id) as device_id,
+    any_value(events.session_id) as session_id,
+    min(events.event_time) as start_time,
+    max(events.event_time) as end_time,
+    max(events.updated_time) as updated_time,
+    DATE_DIFF(max(event_time), min(event_time), SECOND) as duration,
+    count(distinct events.event_id) as total_events,
+    count(
+        distinct case when events.event_type = 'navigate' then events.event_id end
+    ) as total_page_views,
+    count(
+        distinct case when events.event_type = 'navigate' then events.url_full_url end
+    ) as total_unique_urls,
+    concat(
+        ${getReplayUrlPath()},
+        any_value(events.device_id),
+        ':',
+        any_value(events.session_id),
+        '?url_source=DD'
+    ) as replay_url,
+    ${generateCountColumns()},
+    count(case when events.source_type = 'web' then 1 end) as total_web_events,
+    count(case when events.source_type = 'mobile_app' then 1 end) as total_mobile_app_events
+from ${ref("stg_events__all")} as events
+left outer join
+    ${ref("stg_events__user_keys")} as users on
+        users.desc_row_num = 1 and
+        events.device_id = users.device_id
+where events.full_session_id is not null
+group by events.full_session_id

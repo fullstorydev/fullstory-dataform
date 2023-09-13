@@ -1,0 +1,30 @@
+js {
+  function generateSumColumns() {
+    return `${fullstory.eventTypes.map(eventType => `sum(sessions.total_${eventType}_events) as total_${eventType}_events`).join(',\n')}`;
+  }
+}
+
+config {
+  type: "view",
+  schema: functions.baseSchema(),
+  uniqueKey: fullstory.eventsUniqueColumns,
+  description: "",
+  tags: ["fullstory"]
+}
+
+select
+    sessions.user_id as user_id,
+    max(sessions.updated_time) as updated_time,
+    max(sessions.end_time) as last_event_time,
+    sum(total_events) as total_events,
+    count(1) as total_sessions,
+    sum(sessions.duration) as total_session_duration,
+    sum(sessions.total_web_events) as total_web_events,
+    count(case when sessions.total_web_events > 0 then 1 end) as total_web_sessions,
+    sum(sessions.total_mobile_app_events) as total_mobile_app_events,
+    ${generateSumColumns()},
+    count(case when sessions.total_mobile_app_events > 0 then 1 end) as total_mobile_app_sessions,
+from ${ref("int_sessions")} as sessions
+where
+    user_id is not null
+group by sessions.user_id

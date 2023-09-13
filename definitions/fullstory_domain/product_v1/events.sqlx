@@ -1,0 +1,11 @@
+config {
+  type: "view",
+  schema: functions.productSchema(),
+  description: "Events",
+  tags: ['fullstory']
+}
+
+SELECT
+  *,
+  EXTRACT(date from event_time) as event_date,
+ FROM ${ref({schema: functions.baseSchema(), name: "base_events"})}

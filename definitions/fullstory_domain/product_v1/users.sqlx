@@ -1,0 +1,8 @@
+config {
+  type: "view",
+  schema: functions.productSchema(),
+  description: "Users",
+  tags: ['fullstory']
+}
+
+SELECT * FROM ${ref({schema: functions.baseSchema(), name: "base_users"})}
